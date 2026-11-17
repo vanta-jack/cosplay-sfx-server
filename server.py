@@ -35,4 +35,8 @@ def play_track():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # threaded=True: each request gets its own thread, so a slow or stuck
+    # connection from one press can never queue up the next press behind it.
+    # The default dev server is single-threaded, which is the prime suspect
+    # for "first press fine, second press lags ~15s".
+    app.run(host="0.0.0.0", port=5000, threaded=True)
