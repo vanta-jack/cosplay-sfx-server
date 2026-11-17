@@ -191,7 +191,9 @@ void sendHttpRequest(String trackNum) {
     // Ask the server to close the connection after the reply, so no
     // half-open connection is left behind for the next press to queue up on.
     http.addHeader("Connection", "close");
+    unsigned long reqStart = millis();
     int httpResponseCode = http.GET();
+    unsigned long reqMs = millis() - reqStart;
 
     if (httpResponseCode > 0) {
       Serial.print("Response code: ");
@@ -203,6 +205,12 @@ void sendHttpRequest(String trackNum) {
       Serial.print("Error code: ");
       Serial.println(httpResponseCode);
     }
+    // Round-trip time for this request. If a press ever lags again, this
+    // number (vs the server's own log) shows whether the wait was on the
+    // ESP32/network side or the server side.
+    Serial.print("Request took ");
+    Serial.print(reqMs);
+    Serial.println(" ms");
     http.end();
   } else {
     Serial.println("WiFi Disconnected");
