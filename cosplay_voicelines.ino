@@ -185,15 +185,32 @@ void sendHttpRequest(String trackNum) {
     String fullUrl = String(serverBaseUrl) + trackNum;
 
     http.begin(fullUrl.c_str());
+    // Fail fast: never freeze the button loop for ~15s on a dead request.
+    // A healthy reply on this hotspot arrives in well under a second.
+    http.setTimeout(3000);
+    // Ask the server to close the connection after the reply, so no
+    // half-open connection is left behind for the next press to queue up on.
+    http.addHeader("Connection", "close");
+    unsigned long reqStart = millis();
     int httpResponseCode = http.GET();
+    unsigned long reqMs = millis() - reqStart;
 
     if (httpResponseCode > 0) {
       Serial.print("Response code: ");
       Serial.println(httpResponseCode);
+      // Drain the reply body ("Playing") so the connection closes cleanly
+      // instead of being torn down with unread data still in the buffer.
+      http.getString();
     } else {
       Serial.print("Error code: ");
       Serial.println(httpResponseCode);
     }
+    // Round-trip time for this request. If a press ever lags again, this
+    // number (vs the server's own log) shows whether the wait was on the
+    // ESP32/network side or the server side.
+    Serial.print("Request took ");
+    Serial.print(reqMs);
+    Serial.println(" ms");
     http.end();
   } else {
     Serial.println("WiFi Disconnected");
